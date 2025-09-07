@@ -1,0 +1,32 @@
+{
+  "name": "zara-operacao-system",
+  "version": "1.0.1",
+  "description": "Sistema Operacional ZARA - Controle de Qualidade e Operações",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "test": "cd server && npm test",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "keywords": [
+    "zara",
+    "operacao",
+    "qualidade",
+    "nodejs",
+    "react",
+    "mongodb"
+  ],
+  "author": "ZARA Operations Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

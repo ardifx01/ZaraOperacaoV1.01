@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Token - Zara Quality Test</title>
+</head>
+<body>
+    <h1>Corrigindo Token de Autenticação</h1>
+    <p>Este script irá definir o token correto no localStorage e redirecionar para a página do teste.</p>
+    
+    <script>
+        // Token válido gerado com a chave secreta correta
+        const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJsdWNhcy5zYWx2aWFub0Bob3RtYWlsLmNvbSIsImlhdCI6MTc1NzI3NjIwNSwiZXhwIjoxNzU3Mjc5ODA1fQ.vx_BAgSnoExlM26Y3VfFUGWbhzXI5g6XY6wIXZREmuw';
+        
+        // Definir o token no localStorage
+        localStorage.setItem('token', validToken);
+        
+        console.log('Token definido:', validToken);
+        console.log('Token no localStorage:', localStorage.getItem('token'));
+        
+        // Redirecionar para a página do teste após 2 segundos
+        setTimeout(() => {
+            window.location.href = 'http://localhost:5173/quality/tests/622';
+        }, 2000);
+        
+        document.body.innerHTML += '<p style="color: green;">Token definido com sucesso! Redirecionando em 2 segundos...</p>';
+    </script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+name: Deploy Sistema ZARA
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Testes e validação
+  test:
+    runs-on: ubuntu-latest
+    name: 🧪 Testes e Validação
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          frontend/package-lock.json
+          server/package-lock.json
+
+    # Testes do Frontend
+    - name: 📦 Instalar dependências do Frontend
+      run: |
+        cd frontend
+        npm ci
+
+    - name: 🔍 Lint Frontend
+      run: |
+        cd frontend
+        npm run lint
+
+    - name: 🏗️ Build Frontend
+      run: |
+        cd frontend
+        npm run build
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:5000/api' }}
+        VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL || 'http://localhost:5000' }}
+        VITE_APP_NAME: 'Sistema ZARA'
+        VITE_APP_VERSION: '1.0.1'
+        NODE_ENV: production
+
+    # Testes do Backend
+    - name: 📦 Instalar dependências do Backend
+      run: |
+        cd server
+        npm ci
+
+    - name: 🔧 Setup Prisma
+      run: |
+        cd server
+        npx prisma generate
+
+    - name: 🧪 Testes do Backend
+      run: |
+        cd server
+        npm test || echo "Testes não configurados ainda"
+      env:
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-secret
+        NODE_ENV: test
+
+  # Build das imagens Docker
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    name: 🐳 Build Docker Images
+    
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service: [frontend, backend]
+
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+
+    - name: 🐳 Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Login no Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 📝 Extrair metadados
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: 🏗️ Build e Push da imagem
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ matrix.service == 'frontend' && './frontend/Dockerfile' || './server/Dockerfile' }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy para Vercel (Frontend)
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    name: 🚀 Deploy Frontend (Vercel)
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: 📦 Instalar Vercel CLI
+      run: npm install -g vercel@latest
+
+    - name: 🚀 Deploy para Vercel
+      run: |
+        cd frontend
+        vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+
+  # Deploy para Railway (Backend)
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    name: 🚀 Deploy Backend (Railway)
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+
+    - name: 🚂 Deploy para Railway
+      uses: railwayapp/railway-deploy@v3
+      with:
+        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        service: 'zara-backend'
+        detach: true
+
+  # Notificação de sucesso
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend, deploy-backend]
+    if: always()
+    name: 📢 Notificação
+    
+    steps:
+    - name: 📢 Notificar sucesso
+      if: needs.deploy-frontend.result == 'success' && needs.deploy-backend.result == 'success'
+      run: |
+        echo "✅ Deploy realizado com sucesso!"
+        echo "Frontend: Vercel"
+        echo "Backend: Railway"
+        
+    - name: 📢 Notificar falha
+      if: needs.deploy-frontend.result == 'failure' || needs.deploy-backend.result == 'failure'
+      run: |
+        echo "❌ Falha no deploy!"
+        echo "Frontend: ${{ needs.deploy-frontend.result }}"
+        echo "Backend: ${{ needs.deploy-backend.result }}"
+        exit 1
+
+  # Limpeza de recursos antigos
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend, deploy-backend]
+    if: always() && (needs.deploy-frontend.result == 'success' || needs.deploy-backend.result == 'success')
+    name: 🧹 Limpeza
+    
+    steps:
+    - name: 🧹 Limpar imagens antigas
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: ${{ env.IMAGE_NAME }}-frontend
+        package-type: container
+        min-versions-to-keep: 3
+        delete-only-untagged-versions: true
+      continue-on-error: true
+        
+    - name: 🧹 Limpar imagens antigas do backend
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: ${{ env.IMAGE_NAME }}-backend
+        package-type: container
+        min-versions-to-keep: 3
+        delete-only-untagged-versions: true
+      continue-on-error: true

@@ -1,0 +1,33 @@
+// Prisma schema para produção com PostgreSQL
+// Para usar: renomeie para schema.prisma antes do deploy
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Copie todos os models do schema.prisma original aqui
+// Este arquivo serve como template para produção
+
+// Exemplo de configuração para diferentes ambientes:
+// Desenvolvimento: sqlite com file:./dev.db
+// Produção: postgresql com DATABASE_URL do ambiente
+
+// Para migrar para PostgreSQL:
+// 1. Configure DATABASE_URL no .env
+// 2. Substitua o datasource db acima
+// 3. Execute: npx prisma db push
+// 4. Execute: npx prisma generate
+
+// Exemplo de DATABASE_URL para PostgreSQL:
+// DATABASE_URL="postgresql://usuario:senha@host:porta/database?schema=public"
+
+// Exemplo de DATABASE_URL para diferentes provedores:
+// Railway: postgresql://postgres:senha@containers-us-west-xxx.railway.app:port/railway
+// Render: postgresql://usuario:senha@dpg-xxx-a.oregon-postgres.render.com/database
+// Supabase: postgresql://postgres:senha@db.xxx.supabase.co:5432/postgres
+// Neon: postgresql://usuario:senha@ep-xxx.us-east-1.aws.neon.tech/database

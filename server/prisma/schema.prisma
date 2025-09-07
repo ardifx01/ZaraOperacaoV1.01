@@ -1,0 +1,360 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  name        String
+  avatar      String?
+  badgeNumber String?  @unique
+  role        String   @default("OPERATOR")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  qualityTests    QualityTest[]
+  teflonChanges   TeflonChange[]
+  notifications   Notification[]
+  machineOperations MachineOperation[]
+  devices         UserDevice[]
+  statusChanges   MachineStatusHistory[]
+  machinePermissions MachinePermission[]
+  shiftData       ShiftData[]
+  productionArchives ProductionArchive[]
+
+  @@map("users")
+}
+
+model Machine {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  code        String        @unique
+  status      String        @default("STOPPED")
+  location    String?
+  model       String?
+  description String?
+  isActive    Boolean       @default(true)
+  
+  // Configurações de produção
+  productionSpeed Float?        @default(0) // batidas por minuto
+  targetProduction Float?       @default(0) // meta de produção diária
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relacionamentos
+  qualityTests    QualityTest[]
+  teflonChanges   TeflonChange[]
+  operations      MachineOperation[]
+  notifications   Notification[]
+  config          MachineConfig?
+  statusHistory   MachineStatusHistory[]
+  permissions     MachinePermission[]
+  shiftData       ShiftData[]
+  productionArchives ProductionArchive[]
+
+  @@map("machines")
+}
+
+model MachineConfig {
+  id        Int      @id @default(autoincrement())
+  machineId Int      @unique
+  
+  // Configurações gerais
+  general   String?
+  
+  // Configurações operacionais
+  operational String?
+  
+  // Configurações de alertas
+  alerts    String?
+  
+  // Configurações de qualidade
+  quality   String?
+  
+  // Configurações de manutenção
+  maintenance String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  machine Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@map("machine_configs")
+}
+
+model MachineOperation {
+  id        Int       @id @default(autoincrement())
+  machineId Int
+  userId    Int
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  status    String          @default("ACTIVE")
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relacionamentos
+  machine Machine @relation(fields: [machineId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("machine_operations")
+}
+
+model QualityTest {
+  id                    Int         @id @default(autoincrement())
+  machineId             Int
+  userId                Int
+  
+  // Dados do produto
+  product               String
+  lot                   String
+  boxNumber             String
+  
+  // Dimensões da embalagem
+  packageSize           String
+  packageWidth          Float
+  bottomSize            Float
+  sideSize              Float
+  zipperDistance        Float
+  facilitatorDistance   Float
+  
+  // Testes realizados
+  rulerTestDone         Boolean     @default(false)
+  hermeticityTestDone   Boolean     @default(false)
+  
+  // Inspeções de qualidade
+  visualInspection      Boolean?
+  dimensionalCheck      Boolean?
+  colorConsistency      Boolean?
+  surfaceQuality        Boolean?
+  adhesionTest          Boolean?
+  
+  // Resultado
+  approved              Boolean
+  observations          String?
+  
+  // Arquivos de mídia (JSON como string)
+  images                String      @default("[]")
+  videos                String      @default("[]")
+  
+  // Metadados
+  testDate              DateTime    @default(now())
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  // Relacionamentos
+  machine Machine @relation(fields: [machineId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("quality_tests")
+}
+
+model TeflonChange {
+  id              Int       @id @default(autoincrement())
+  machineId       Int
+  userId          Int
+  changeDate      DateTime  @default(now())
+  expiryDate      DateTime
+  teflonType      String
+  observations    String?
+  photos          String    @default("[]")
+  alertSent       Boolean   @default(false)
+  notificationSent Boolean  @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relacionamentos
+  machine Machine @relation(fields: [machineId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("teflon_changes")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int?             // Opcional para notificações globais
+  machineId Int?
+  testId    Int?
+  changeId  Int?
+  title     String
+  message   String
+  type      String
+  priority  String               @default("MEDIUM")
+  channels  String           @default("[\"SYSTEM\"]")
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  metadata  String?          // Dados adicionais em JSON como string
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relacionamentos
+  user    User?    @relation(fields: [userId], references: [id])
+  machine Machine? @relation(fields: [machineId], references: [id])
+
+  @@map("notifications")
+}
+
+model UserDevice {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  token      String   @unique
+  deviceInfo String?
+  active     Boolean  @default(true)
+  lastUsed   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relacionamentos
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, token])
+  @@map("user_devices")
+}
+
+model Report {
+  id          Int        @id @default(autoincrement())
+  type        String
+  period      String
+  data        String
+  generatedAt DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+
+  @@map("reports")
+}
+
+model SystemLog {
+  id        Int       @id @default(autoincrement())
+  action    String
+  userId    Int?
+  details   String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@map("system_logs")
+}
+
+model MachineStatusHistory {
+  id          Int      @id @default(autoincrement())
+  machineId   Int
+  userId      Int?
+  previousStatus String?
+  newStatus   String
+  reason      String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  machine Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@map("machine_status_history")
+}
+
+model MachinePermission {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  machineId Int
+  canView   Boolean  @default(true)
+  canOperate Boolean @default(false)
+  canEdit   Boolean  @default(false)
+  grantedBy Int?     // ID do usuário que concedeu a permissão
+  grantedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  machine Machine @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  // Índice único para evitar duplicatas
+  @@unique([userId, machineId])
+  @@map("machine_permissions")
+}
+
+model ShiftData {
+  id          Int      @id @default(autoincrement())
+  machineId   Int
+  operatorId  Int
+  shiftType   String   // MORNING (7-19), NIGHT (19-7)
+  shiftDate   DateTime // Data do turno
+  startTime   DateTime // Início do turno (7:00 ou 19:00)
+  endTime     DateTime // Fim do turno (19:00 ou 7:00 do dia seguinte)
+  
+  // Dados de produção do turno
+  totalProduction    Float    @default(0)
+  targetProduction   Float    @default(0)
+  efficiency         Float    @default(0)
+  downtime          Float    @default(0) // em minutos
+  qualityTests      Int      @default(0)
+  approvedTests     Int      @default(0)
+  rejectedTests     Int      @default(0)
+  
+  // Status do turno
+  isActive    Boolean  @default(true)  // false quando arquivado
+  isArchived  Boolean  @default(false) // true quando dados são arquivados
+  
+  // Dados adicionais em JSON
+  productionData String? // Dados detalhados de produção
+  qualityData   String? // Dados detalhados de qualidade
+  maintenanceData String? // Dados de manutenção
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  archivedAt  DateTime? // Quando foi arquivado
+
+  // Relacionamentos
+  machine         Machine           @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  operator        User              @relation(fields: [operatorId], references: [id])
+  productionArchive ProductionArchive?
+
+  // Índice único para evitar duplicatas por turno
+  @@unique([machineId, operatorId, shiftDate, shiftType])
+  @@map("shift_data")
+}
+
+model ProductionArchive {
+  id          Int      @id @default(autoincrement())
+  shiftDataId Int      @unique
+  machineId   Int
+  operatorId  Int
+  archiveDate DateTime @default(now())
+  
+  // Dados arquivados em JSON
+  archivedData String  // Todos os dados do turno em formato JSON
+  
+  // Metadados do arquivo
+  dataSize    Int?     // Tamanho dos dados em bytes
+  checksum    String?  // Hash para verificação de integridade
+  
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  shiftData ShiftData @relation(fields: [shiftDataId], references: [id], onDelete: Cascade)
+  machine   Machine   @relation(fields: [machineId], references: [id])
+  operator  User      @relation(fields: [operatorId], references: [id])
+
+  @@map("production_archives")
+}
+
+// Valores válidos para os campos (comentários para referência):
+// UserRole: OPERATOR, LEADER, MANAGER, ADMIN
+// MachineStatus: STOPPED, RUNNING, MAINTENANCE, ERROR
+// OperationStatus: ACTIVE, COMPLETED, CANCELLED
+// NotificationType: QUALITY_TEST, TEFLON_CHANGE, MACHINE_STATUS, MACHINE_INACTIVE, DAILY_REPORT, SYSTEM_ALERT, MAINTENANCE, ERROR
+// ReportType: DAILY, WEEKLY, MONTHLY, CUSTOM
+// NotificationPriority: LOW, MEDIUM, HIGH, CRITICAL
+// ShiftType: MORNING (7:00-19:00), NIGHT (19:00-7:00)
