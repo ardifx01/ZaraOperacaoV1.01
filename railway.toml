@@ -1,6 +1,6 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "server/Dockerfile.simple"
+dockerfilePath = "server/Dockerfile.railway"
 
 [deploy]
 startCommand = "npm start"
