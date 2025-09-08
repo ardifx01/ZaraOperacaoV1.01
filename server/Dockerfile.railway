@@ -21,7 +21,7 @@ RUN npm install && npm cache clean --force
 COPY . .
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN ./node_modules/.bin/prisma generate
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --omit=dev
