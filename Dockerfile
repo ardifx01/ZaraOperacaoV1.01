@@ -1,8 +1,8 @@
 # Multi-stage build for ZARA system
 FROM node:18-alpine AS base
 
-# Install system dependencies
-RUN apk add --no-cache curl git
+# Install system dependencies including SSL libraries for Prisma
+RUN apk add --no-cache curl git openssl1.1-compat
 
 # Set working directory
 WORKDIR /app
