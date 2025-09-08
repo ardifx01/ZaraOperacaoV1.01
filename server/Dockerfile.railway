@@ -17,14 +17,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy Prisma schema
-COPY prisma ./prisma/
+# Copy application code (including prisma)
+COPY . .
 
 # Generate Prisma client
 RUN npx prisma generate
-
-# Copy application code
-COPY . .
 
 # Create upload directories
 RUN mkdir -p uploads/avatars uploads/images
