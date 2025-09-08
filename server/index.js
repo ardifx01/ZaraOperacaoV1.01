@@ -192,8 +192,8 @@ server.listen(PORT, () => {
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 });
 
-// Iniciar servidor HTTPS se disponível
-if (httpsServer && process.env.SSL_ENABLED === 'true') {
+// Iniciar servidor HTTPS se disponível (desabilitado no Railway)
+if (httpsServer && process.env.SSL_ENABLED === 'true' && process.env.RAILWAY_ENVIRONMENT !== 'production') {
   httpsServer.listen(HTTPS_PORT, () => {
     console.log(`🔒 Servidor ZARA (HTTPS) rodando na porta ${HTTPS_PORT}`);
     console.log(`🔐 SSL/TLS habilitado`);
