@@ -5,7 +5,9 @@
     "dockerfilePath": "Dockerfile",
     "buildCommand": null,
     "watchPatterns": ["**/*"],
-    "buildArgs": {},
+    "buildArgs": {
+      "BUILDKIT_INLINE_CACHE": "1"
+    },
     "dockerContext": "."
   },
   "deploy": {
