@@ -10,7 +10,7 @@
   "deploy": {
     "numReplicas": 1,
     "sleepApplication": false,
-    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyType": "on-failure",
     "restartPolicyMaxRetries": 10
   },
   "environments": {

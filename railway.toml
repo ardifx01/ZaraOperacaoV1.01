@@ -6,7 +6,6 @@ dockerfilePath = "Dockerfile"
 startCommand = "cd server && npm start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
-restartPolicyType = "on-failure"
 
 [env]
 NODE_ENV = "production"
