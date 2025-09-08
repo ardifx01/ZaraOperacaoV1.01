@@ -1,5 +1,11 @@
 # Deploy no Vercel - Sistema ZARA
 
+## Visão Geral
+
+Este guia explica como fazer o deploy completo do Sistema ZARA no Vercel:
+- **Backend**: API Node.js/Express (diretório `server`)
+- **Frontend**: Aplicação React/Vite (diretório `frontend`)
+
 ## Configuração do Backend
 
 ### 1. Preparação
@@ -61,16 +67,63 @@ Recomendações para produção:
 3. Configure o output directory: `./`
 4. Faça o deploy
 
-### 5. Configuração do Frontend
+## Configuração do Frontend
 
-Atualize o arquivo `.env.production` do frontend:
+### 1. Deploy do Frontend
+
+1. No Vercel, crie um novo projeto para o frontend
+2. Selecione o diretório `frontend` como root directory
+3. Configure o framework preset como "Vite"
+4. Configure as variáveis de ambiente
+
+### 2. Variáveis de Ambiente do Frontend
+
+Configure no painel do Vercel:
 
 ```bash
-VITE_API_URL="https://seu-backend.vercel.app"
+# URL da API (substitua pela URL real do seu backend)
+VITE_API_URL="https://seu-backend.vercel.app/api"
+VITE_SOCKET_URL="https://seu-backend.vercel.app"
+
+# Configurações da aplicação
+VITE_APP_NAME="Sistema ZARA"
+VITE_APP_VERSION="1.0.1"
 VITE_NODE_ENV="production"
+
+# Configurações de build
+VITE_BUILD_SOURCEMAP="false"
+VITE_BUILD_MINIFY="true"
 ```
 
-### 6. Comandos Úteis
+### 3. Atualização Automática
+
+O arquivo `.env.production` será usado automaticamente:
+
+```bash
+VITE_API_URL=https://seu-backend.vercel.app/api
+VITE_SOCKET_URL=https://seu-backend.vercel.app
+VITE_NODE_ENV=production
+```
+
+## Ordem de Deploy Recomendada
+
+### 1. Deploy do Backend Primeiro
+1. Configure o banco de dados (Supabase/Railway/Render)
+2. Faça deploy do backend no Vercel
+3. Anote a URL do backend (ex: `https://zara-backend.vercel.app`)
+4. Teste a API: `https://zara-backend.vercel.app/api/health`
+
+### 2. Deploy do Frontend
+1. Configure as variáveis de ambiente com a URL real do backend
+2. Faça deploy do frontend no Vercel
+3. Teste a aplicação completa
+
+### 3. Configuração Final
+1. Atualize CORS_ORIGIN no backend com a URL do frontend
+2. Teste todas as funcionalidades
+3. Configure domínio personalizado (opcional)
+
+## Comandos Úteis
 
 ```bash
 # Gerar cliente Prisma
