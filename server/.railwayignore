@@ -1,0 +1,24 @@
+# Railway ignore file
+node_modules/
+*.log
+logs/
+.env.local
+.env.development
+.env.test
+prisma/dev.db*
+test-*.js
+check-*.js
+create-*.js
+fix-*.js
+setup-*.js
+seed-*.js
+simple-*.js
+update-*.js
+migrate-*.js
+debug-*.js
+validate-*.js
+uploads/
+.git/
+.github/
+README.md
+DEPLOY.md
