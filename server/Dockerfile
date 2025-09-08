@@ -12,6 +12,7 @@ COPY prisma ./prisma/
 
 # Install dependencies
 RUN npm ci --only=production
+RUN npm cache clean --force
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -19,11 +20,16 @@ RUN npx prisma generate
 # Copy application code
 COPY . .
 
-# Build application (if build script exists)
-RUN npm run build || echo "No build script found, skipping..."
-
 # Create necessary directories
 RUN mkdir -p uploads/avatars uploads/images
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# Change ownership of app directory
+RUN chown -R nextjs:nodejs /app
+USER nextjs
 
 # Expose port
 EXPOSE 5000

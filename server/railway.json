@@ -2,13 +2,10 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "dockerfile",
-    "dockerfilePath": "Dockerfile",
+    "dockerfilePath": "../Dockerfile",
     "buildCommand": null,
     "watchPatterns": ["**/*"],
-    "buildArgs": {
-      "BUILDKIT_INLINE_CACHE": "1"
-    },
-    "dockerContext": "."
+    "dockerContext": ".."
   },
   "deploy": {
     "numReplicas": 1,

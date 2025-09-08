@@ -1,0 +1,86 @@
+# Dependencies
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+server/logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+DOCKER-TROUBLESHOOTING.md
+
+# Docker
+Dockerfile.simple
+docker-compose.yml
+
+# Test files
+*.test.js
+test-*.js
+check-*.js
+validate-*.js
+build-test.js
+
+# Development files
+.github/
+deploy.sh
+deploy.ps1
+render.yaml
+
+# Frontend build (if building separately)
+frontend/dist/
+frontend/node_modules/
+
+# Database
+server/prisma/dev.db
+server/prisma/dev.db-journal
+
+# Uploads (keep structure but ignore content)
+server/uploads/*
+!server/uploads/avatars/
+!server/uploads/images/
+server/uploads/avatars/*
+server/uploads/images/*
+
+# Client directory (if not needed)
+client/
+src/
+
+# Build artifacts
+build/
+dist/
+
+# Temporary files
+tmp/
+temp/
