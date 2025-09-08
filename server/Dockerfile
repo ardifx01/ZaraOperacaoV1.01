@@ -12,11 +12,13 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install dependencies and generate Prisma client
-RUN npm ci --only=production
-RUN npx prisma generate
+RUN npm ci --only=production && npx prisma generate
 
 # Copy application code
 COPY . .
+
+# Build application if needed
+RUN npm run build || echo "No build script found, skipping..."
 
 # Create uploads directory
 RUN mkdir -p uploads/avatars uploads/images
